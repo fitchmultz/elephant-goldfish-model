@@ -378,6 +378,52 @@ def successful_reads(entries: list[dict], cwd: pathlib.Path) -> set[pathlib.Path
     return reads
 
 
+def successful_writes(events: list[dict], cwd: pathlib.Path) -> dict[pathlib.Path, list[int]]:
+    """Return parent write starts paired with successful native results."""
+    calls = {}
+    writes: dict[pathlib.Path, list[int]] = {}
+    for index, event in enumerate(events):
+        if event.get("type") == "tool_execution_start" and event.get("toolName") == "write":
+            calls[event["toolCallId"]] = (index, (cwd / event["args"]["path"]).resolve())
+        elif (event.get("type") == "tool_execution_end"
+              and event.get("toolCallId") in calls and event.get("isError") is False):
+            start, path = calls[event["toolCallId"]]
+            writes.setdefault(path, []).append(start)
+    return writes
+
+
+def verify_reviewer_assignments(
+    host: InstalledPi, receipts: list[dict], expected_personas: set[str],
+) -> dict[str, set[pathlib.Path]]:
+    """Require a distinct fresh, read-only child assignment for every lens."""
+    covered = set()
+    sessions = set()
+    reads_by_run = {}
+    for receipt in receipts:
+        assert receipt["context"] == "fresh"
+        session = pathlib.Path(receipt["sessionFile"]).resolve()
+        assert session not in sessions, "Review assignments shared a child session"
+        sessions.add(session)
+        result = json.loads((session.parent / "result.json").read_text())
+        assert result["id"] == receipt["id"] and result["status"] == "completed"
+        entries = read_jsonl(session)
+        reads = successful_reads(entries, host.workspace)
+        lenses = {
+            path.stem for path in reads if path.parent == host.package / "agents"
+        } & expected_personas
+        assert len(lenses) == 1, "One child must not stand in for multiple requested reviewers"
+        covered.update(lenses)
+        assert not any(
+            part.get("name") in {"write", "edit", "delegate", "agent_runs"}
+            for entry in entries
+            for part in entry.get("message", {}).get("content", [])
+            if isinstance(part, dict) and part.get("type") == "toolCall"
+        ), "Reviewer wrote files or attempted nested delegation"
+        reads_by_run[receipt["id"]] = reads
+    assert expected_personas <= covered, "Missing independent reviewer assignments"
+    return reads_by_run
+
+
 def test_packed_manifest_discovery(installed_pi: InstalledPi, repo_root: pathlib.Path) -> None:
     host = installed_pi
     resources = (
@@ -480,11 +526,9 @@ Do not claim success unless the real child completed its reads.
         assert {persona, target, standard} <= reads, "Child did not successfully read all three resources"
         output_file = pathlib.Path(launch_receipts(events)[0]["sessionFile"]).parent / "output.txt"
         assert report.read_text().strip() == output_file.read_text().strip()
-        assert any(
-            event.get("type") == "tool_execution_start" and event.get("toolName") == "write"
-            and pathlib.Path(event["args"]["path"]).name == report.name
-            for event in events
-        ), "Parent did not write the returned findings"
+        assert report in successful_writes(events, host.workspace), (
+            "Parent did not successfully write the returned findings"
+        )
         (host.root / "live-resource-reads.json").write_text(json.dumps(sorted(map(str, reads)), indent=2))
 
 
@@ -545,11 +589,9 @@ Do not edit the target or use memory or external services.
         assert report.read_text().strip() == output.strip(), (
             "Parent dropped or changed the comprehension paraphrase"
         )
-        assert any(
-            event.get("type") == "tool_execution_start" and event.get("toolName") == "write"
-            and pathlib.Path(event["args"]["path"]).name == report.name
-            for event in events
-        ), "Parent did not write the comprehension result"
+        assert report in successful_writes(events, host.workspace), (
+            "Parent did not successfully write the comprehension result"
+        )
 
 
 @pytest.mark.skipif(
@@ -588,15 +630,8 @@ handoff. Do not implement code, run other stages, or invent human decisions.
             "design_critic", "codebase_details", "zoom_out", "comprehension",
             "implementation_readiness", "structural", "inventive_catalyst",
         }
-        persona_reads = set()
-        for receipt in brainstorm_receipts:
-            assert receipt["context"] == "fresh"
-            entries = read_jsonl(pathlib.Path(receipt["sessionFile"]))
-            persona_reads.update(
-                path.stem for path in successful_reads(entries, host.workspace)
-                if path.parent == host.package / "agents"
-            )
-        assert expected_brainstorm <= persona_reads, "Brainstorm skipped a requested lens"
+        verify_reviewer_assignments(host, brainstorm_receipts, expected_brainstorm)
+        assert brief in successful_writes(brainstorm, host.workspace)
         assert brief.is_file() and brief.stat().st_size > 0
         rpc.prompt(f"""/skill:egm-draft
 Use {brief}, the existing source {source}, and the requirements above.
@@ -607,6 +642,7 @@ Include an implementation plan and tests. Stop after saving the complete draft.
 Do not start review, approve the final design, or implement production code.
 """)
         assert draft.is_file() and draft.stat().st_size > 0
+        assert draft in successful_writes(rpc.events, host.workspace)
         before_review = draft.read_bytes()
         start = len(rpc.events)
         all_events = rpc.prompt(f"""/skill:egm-review
@@ -635,27 +671,16 @@ Do not resolve findings, edit the draft, approve the design, or implement code.
         ]
         previous_write = -1
         for filename, expected_personas in stages:
-            writes = [
-                index for index, event in enumerate(review)
-                if event.get("type") == "tool_execution_start"
-                and event.get("toolName") == "write"
-                and pathlib.Path(event["args"]["path"]).name == filename
-            ]
-            assert writes, f"Missing native parent write for {filename}"
+            report = host.workspace / filename
+            writes = successful_writes(review, host.workspace).get(report, [])
+            assert writes, f"Missing successful native parent write for {filename}"
             stage_write = writes[0]
             assert stage_write > previous_write, "Review stages ran out of order"
             receipts = launch_receipts(review[previous_write + 1:stage_write])
-            actual_personas = set()
+            reads_by_run = verify_reviewer_assignments(host, receipts, expected_personas)
             for receipt in receipts:
-                assert receipt["context"] == "fresh"
-                session = pathlib.Path(receipt["sessionFile"])
-                result = json.loads((session.parent / "result.json").read_text())
-                assert result["status"] == "completed"
-                reads = successful_reads(read_jsonl(session), host.workspace)
+                reads = reads_by_run[receipt["id"]]
                 assert draft in reads
-                actual_personas.update(
-                    path.stem for path in reads if path.parent == host.package / "agents"
-                )
                 assert any(
                     event.get("type") == "message_end"
                     and event.get("message", {}).get("customType") == "agent-completion"
@@ -664,12 +689,11 @@ Do not resolve findings, edit the draft, approve the design, or implement code.
                 ), "Stage report written before its reviewer completed"
                 if filename == "comprehension_report.md":
                     assert reads == {draft, host.package / "agents/comprehension.md"}
-            assert expected_personas <= actual_personas, f"Missing reviewers in {filename}"
-            report = host.workspace / filename
             assert report.is_file() and report.stat().st_size > 0
             previous_write = stage_write
         consolidated = host.workspace / "consolidated_review_report.md"
         assert consolidated.is_file() and consolidated.stat().st_size > 0
+        assert consolidated in successful_writes(review, host.workspace)
         assert draft.read_bytes() == before_review, "Audit changed the target without approval"
         assert source.read_text() == original, "Design workflow modified production source"
         assert set(host.workspace.rglob("*.py")) == {source}, "Design workflow implemented code"

@@ -143,6 +143,14 @@ the project has no `CLAUDE.md`. To keep the files out of git, add the folder to
 
 ## Support Status & Contributing Other Harnesses
 
+**Pi** passes native packed-package discovery and model-backed brainstorm,
+draft, and full-review fixtures on official Pi 1.5.0 and `fitchmultz/pi`
+`eb5d22b`. Reviews use `pi-subagents` with direct fresh-session dispatch.
+Read-only reviewer behavior is an instruction, not a tool-permission boundary.
+Interactive approvals and context rollover remain untested. See the
+[Pi guide](pi.md) and this fork's
+[test record](https://github.com/fitchmultz/elephant-goldfish-model/blob/main/TESTING.md#harness-test-record).
+
 **Antigravity CLI**, **Claude Code**, and **Codex** pass automated installation
 and end-to-end workflow fixtures. Reviewer isolation evidence is narrower:
 parent-turn isolation and host-instruction exclusion are separate results.

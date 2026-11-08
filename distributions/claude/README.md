@@ -143,7 +143,7 @@ You can use each skill when you need it. You do not have to follow the full sequ
 - [Getting started](docs/getting_started.md): the workflow and project layout.
 - [Setup](docs/harnesses.md): installation, agent capabilities, and known limits.
 - [Architecture](https://github.com/google/elephant-goldfish-model/blob/main/docs/designs/architecture.md): how skills and reviewers fit together.
-- [Testing](https://github.com/google/elephant-goldfish-model/blob/main/TESTING.md): checks, execution records, and verification limits.
+- [Testing](https://github.com/fitchmultz/elephant-goldfish-model/blob/main/TESTING.md): checks, execution records, and verification limits.
 - [Dave Rensin’s original essay](https://medium.com/@drensin/elephants-goldfish-and-the-new-golden-age-of-software-engineering-c33641a48874): the ideas behind EGM.
 
 ## Contribute

@@ -1,7 +1,7 @@
 # Pi-native EGM package
 
 * **Author:** Mitch Fultz
-* **Status:** Implementation
+* **Status:** Current
 
 ## Goal
 
