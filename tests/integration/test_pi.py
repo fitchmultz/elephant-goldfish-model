@@ -718,7 +718,10 @@ Do not resolve findings, edit the draft, approve the design, or implement code.
             previous_write = stage_write
         consolidated = host.workspace / "consolidated_review_report.md"
         assert consolidated.is_file() and consolidated.stat().st_size > 0
-        assert consolidated in successful_writes(review, host.workspace)
+        consolidated_writes = successful_writes(review, host.workspace).get(consolidated, [])
+        assert consolidated_writes and consolidated_writes[0] > previous_write, (
+            "Consolidated report was written before all stage reports"
+        )
         assert draft.read_bytes() == before_review, "Audit changed the target without approval"
         assert source.read_text() == original, "Design workflow modified production source"
         assert set(host.workspace.rglob("*.py")) == {source}, "Design workflow implemented code"

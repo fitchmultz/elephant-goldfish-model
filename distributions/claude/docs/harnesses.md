@@ -144,8 +144,9 @@ the project has no `CLAUDE.md`. To keep the files out of git, add the folder to
 ## Support Status & Contributing Other Harnesses
 
 **Pi** passes native packed-package discovery and fresh reviewer probes on
-official Pi 1.5.0 and `fitchmultz/pi` `eb5d22b`. Native command expansion for
-brainstorm, draft, and full review is being revalidated. Reviews use
+official Pi 1.5.0 and `fitchmultz/pi` `eb5d22b`. Model-backed brainstorm, draft,
+and full-review fixtures pass through native `/skill:` expansion from the
+installed package. Reviews use
 `@fitchmultz/pi-subagents` with direct fresh-session dispatch.
 Read-only reviewer behavior is an instruction, not a tool-permission boundary.
 Interactive approvals and context rollover remain untested. See the
