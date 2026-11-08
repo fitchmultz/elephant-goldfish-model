@@ -75,6 +75,53 @@ pytest tests/unit/test_link_integrity.py -v
 
 ---
 
+## Native Pi probes (opt-in)
+
+Use an explicit absolute launcher path to select the host under test.
+Run the no-model package probe:
+
+```sh
+EGM_PI_TEST=1 EGM_PI_BIN=/absolute/path/to/pi \
+  pytest tests/integration/test_pi.py -v
+```
+
+This packs the candidate with npm, installs it in an isolated Pi agent
+directory, and checks the seven native skill commands through RPC. The test
+project is outside the source checkout. This proves package discovery, not
+review execution.
+
+For real-provider isolation and reviewer-resource probes:
+
+```sh
+mkdir -p /tmp/egm-pi-live
+chmod 700 /tmp/egm-pi-live
+EGM_PI_LIVE=1 EGM_PI_BIN=/absolute/path/to/pi \
+  EGM_PI_TEST_DIR=/tmp/egm-pi-live \
+  EGM_PI_AUTH_AGENT_DIR="$HOME/.pi/agent" \
+  EGM_PI_MODEL=openai/gpt-6.1-sol \
+  pytest tests/integration/test_pi.py -v
+```
+
+These tests consume model usage. They copy credentials into the private test
+directory, not into the candidate package. They keep the RPC main alive across
+asynchronous child completion, inspect native child journals for successful
+reads, and distinguish conversation isolation from host-instruction exclusion.
+They do not test interactive approval dialogs or the full brainstorm-to-review
+workflow. Keep raw traces private.
+
+To exercise brainstorm, draft, and all five uninterrupted review stages, add
+`EGM_PI_WORKFLOW=1` to the live invocation. This also installs `pi-posthorse`
+inside the isolated agent directory. The fixture supplies requirements and
+answers its drafting checkpoints in advance. It verifies seven brainstorm
+lenses, fresh reviewer sessions, stage order, parent-written artifacts, and
+unchanged source code. This is model-backed fixture evidence, not an
+interactive approval or context-rollover test.
+
+Run the probes separately against the latest official Pi release and the
+latest `fitchmultz/pi` launcher. Record exact versions and revisions with each
+result. An installed fork sharing the official version number is not evidence
+for both hosts. See [Pi integration](docs/pi.md) for runtime behavior.
+
 ## Native Claude Reviewer Probe (Opt-in)
 
 With an authenticated Claude Code 2.1.271+ installation, run:

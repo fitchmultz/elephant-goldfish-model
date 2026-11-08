@@ -6,6 +6,7 @@ operational guardrails.
 
 | Document | Author | Primary Component |
 | :------- | :----- | :---------------- |
+| [pi_native.md](pi_native.md)<br>Native Pi package, resource paths, and fresh-session reviewer orchestration. | [@fitchmultz](https://github.com/fitchmultz) | [Pi integration](../pi.md) |
 | [site_documentation.md](site_documentation.md)<br>Proposed multi-page guide, skill reference, and shared site interface. | [@n3wth](https://github.com/n3wth) | Website and documentation |
 | [triz_integration.md](triz_integration.md)<br>Draft Soviet TRIZ method integration introducing the Inventive Catalyst persona to eliminate false architectural compromises in `/egm-brainstorm` and Step 5 of `/egm-review`. | [@briansuchy](https://github.com/briansuchy) | [`egm-brainstorm`](../../skills/egm-brainstorm/SKILL.md), [`egm-review`](../../skills/egm-review/SKILL.md) (#37) |
 | [ask.md](ask.md)<br>Draft read-only command that answers questions about EGM and suggests the next skill from workspace artifacts. | [@smituparmar01](https://github.com/smituparmar01) | `egm-ask` (#175) |
