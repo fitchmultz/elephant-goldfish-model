@@ -17,7 +17,7 @@ pi install npm:@fitchmultz/pi-subagents
 pi install git:github.com/fitchmultz/elephant-goldfish-model
 ```
 
-If you already use `pi-subagents`, keep that installation. EGM does not bundle a
+If you already use `@fitchmultz/pi-subagents`, keep that installation. EGM does not bundle a
 second copy. Start a new session, or run `/reload` in an existing session.
 `pi list` lists both packages. Command completion includes all seven
 `/skill:egm-*` commands.
@@ -107,6 +107,8 @@ Pi children cannot delegate. Use **direct dispatch** for every review:
 3. Tell each reviewer to read its persona first, then the target, standards,
    and supplied context. Reviewers return their complete findings through the
    native run result. They do not write files or edit the target or source.
+   Tell them not to use `notes`, `history`, `intercom`, or other memory tools
+   to recover the Elephant's discussions or conclusions.
 4. Inspect each completed result, paging until complete. The main session
    writes all report files. Apply `agents/synthesizer.md` there to deduplicate
    findings and write the aggregate. Its spawning step is already satisfied by
@@ -123,6 +125,7 @@ delegate({
 		"Review /absolute/project/design_draft.md, full file, against " +
 		"/absolute/package/resources/document_standards/zoom-out-standard.md. " +
 		"GoldfishContext: []. Do not write or modify any files. " +
+		"Do not use notes, history, intercom, or memory tools. " +
 		"Return all findings with severity, affected scope, and rationale."
 });
 ```

@@ -30,7 +30,7 @@ pi install npm:@fitchmultz/pi-subagents
 pi install git:github.com/fitchmultz/elephant-goldfish-model
 ```
 
-Keep your existing `pi-subagents` installation if you already have one.
+Keep your existing `@fitchmultz/pi-subagents` installation if you already have one.
 Start a new session or run `/reload`. The package loads skills, not another
 agent runtime. Fresh reviewers use Pi's selected model and credentials through
 `delegate` with `context: "fresh"`.

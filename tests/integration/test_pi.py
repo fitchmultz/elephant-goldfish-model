@@ -233,15 +233,30 @@ class Rpc:
                 assert record.get("success") is True, f"RPC rejected {command}; inspect {self.log}.*"
                 return record.get("data", {})
 
-    def prompt(self, prompt: str) -> list[dict]:
+    def prompt(
+        self, prompt: str, *, skill: str | None = None, timeout: float = 600,
+    ) -> list[dict]:
         request_id = self.send("prompt", message=prompt)
-        deadline = time.monotonic() + 600
+        deadline = time.monotonic() + timeout
         accepted = False
+        expanded = False
         while True:
             record = self.receive(deadline)
             if record.get("type") == "response" and record.get("id") == request_id:
                 assert record.get("success") is True, f"Prompt rejected; inspect {self.log}.*"
                 accepted = True
+            if (skill and not expanded and record.get("type") == "message_end"
+                    and record.get("message", {}).get("role") == "user"):
+                message = record["message"]
+                content = message["content"]
+                body = content if isinstance(content, str) else "".join(
+                    part["text"] for part in content if part.get("type") == "text"
+                )
+                path = self.host.package / "skills" / skill / "SKILL.md"
+                assert body.startswith(f'<skill name="{skill}" location="{path}">'), (
+                    f"Pi did not expand the installed skill; inspect {self.log}.*"
+                )
+                expanded = True
             if record.get("type") != "agent_settled" or not accepted:
                 continue
             assert record.get("aborted") is not True, f"Run aborted; inspect {self.log}.*"
@@ -271,6 +286,7 @@ class Rpc:
             ]
             if notice_indices and replies[-1][0] < max(notice_indices):
                 continue
+            assert not skill or expanded, "No native expanded skill message observed"
             return self.events
 
     def __exit__(self, exc_type, exc, traceback) -> None:
@@ -352,7 +368,10 @@ def completed_children(host: InstalledPi, events: list[dict]) -> list[list[dict]
         if result.get("terminalEntryId"):
             assert result["terminalEntryId"] == answers[-1]["id"], session
         assert not any(
-            part.get("name") in {"delegate", "agent_runs", "write", "edit", "bash"}
+            part.get("name") in {
+                "delegate", "agent_runs", "write", "edit", "bash",
+                "notes", "history", "intercom",
+            }
             for answer in answers for part in answer["message"].get("content", [])
             if part.get("type") == "toolCall"
         ), "Goldfish attempted nested fanout, writes, or shell commands"
@@ -395,7 +414,7 @@ def successful_writes(events: list[dict], cwd: pathlib.Path) -> dict[pathlib.Pat
 def verify_reviewer_assignments(
     host: InstalledPi, receipts: list[dict], expected_personas: set[str],
 ) -> dict[str, set[pathlib.Path]]:
-    """Require a distinct fresh, read-only child assignment for every lens."""
+    """Require a distinct fresh child assignment for every lens."""
     covered = set()
     sessions = set()
     reads_by_run = {}
@@ -414,7 +433,9 @@ def verify_reviewer_assignments(
         assert len(lenses) == 1, "One child must not stand in for multiple requested reviewers"
         covered.update(lenses)
         assert not any(
-            part.get("name") in {"write", "edit", "delegate", "agent_runs"}
+            part.get("name") in {
+                "write", "edit", "delegate", "agent_runs", "notes", "history", "intercom",
+            }
             for entry in entries
             for part in entry.get("message", {}).get("content", [])
             if isinstance(part, dict) and part.get("type") == "toolCall"
@@ -422,6 +443,17 @@ def verify_reviewer_assignments(
         reads_by_run[receipt["id"]] = reads
     assert expected_personas <= covered, "Missing independent reviewer assignments"
     return reads_by_run
+
+
+def verify_completed_before(events: list[dict], receipts: list[dict], index: int) -> None:
+    completed = {
+        event["message"]["details"]["id"] for event in events[:index]
+        if event.get("type") == "message_end"
+        and event.get("message", {}).get("customType") == "agent-completion"
+    }
+    assert {receipt["id"] for receipt in receipts} <= completed, (
+        "Parent wrote the artifact before collecting all reviewer completions"
+    )
 
 
 def test_packed_manifest_discovery(installed_pi: InstalledPi, repo_root: pathlib.Path) -> None:
@@ -551,8 +583,7 @@ and exit 1. Test empty files, mixed blank/nonblank lines, and invalid UTF-8.
 """)
     persona = host.package / "agents/comprehension.md"
     report = host.workspace / "comprehension_report.md"
-    prompt = f"""/skill:egm-review
-TargetFile: {target}
+    prompt = f"""/skill:egm-review TargetFile: {target}
 Step: 6 (Comprehension Test only). No additional GoldfishContext.
 This is a bounded noninteractive Stage 6 probe. Read the Pi integration first.
 Use one real delegate with context: fresh and the installed comprehension
@@ -569,7 +600,7 @@ the Stage 6 checkpoint; it does not test interactive approval behavior.
 Do not edit the target or use memory or external services.
 """
     with Rpc(host, "comprehension", live=True) as rpc:
-        events = rpc.prompt(prompt)
+        events = rpc.prompt(prompt, skill="egm-review")
         children = completed_children(host, events)
         assert len(children) == 1
         reads = successful_reads(children[0], host.workspace)
@@ -612,8 +643,7 @@ def test_brainstorm_draft_review_workflow(installed_pi: InstalledPi) -> None:
     brief = host.workspace / "concepts_brief.md"
     draft = host.workspace / "design_draft.md"
     with Rpc(host, "workflow", live=True) as rpc:
-        brainstorm = rpc.prompt(f"""/skill:egm-brainstorm
-Add an optional --nonblank flag to {source}. Today it counts all lines in a
+        brainstorm = rpc.prompt(f"""/skill:egm-brainstorm Add an optional --nonblank flag to {source}. Today it counts all lines in a
 UTF-8 file. Without the flag preserve that behavior. With the flag count only
 lines whose stripped text is nonempty. Preserve source input; no network or
 third-party dependencies. Missing input, read errors, and invalid UTF-8 should
@@ -624,29 +654,29 @@ Review with Goldfishes. Use all seven brainstorm personas, fresh direct
 delegation, and real native completion. No nested orchestrator. Reviewers
 return findings without writes. The main writes {brief}, then stops at the
 handoff. Do not implement code, run other stages, or invent human decisions.
-""")
+""", skill="egm-brainstorm")
         brainstorm_receipts = launch_receipts(brainstorm)
         expected_brainstorm = {
             "design_critic", "codebase_details", "zoom_out", "comprehension",
             "implementation_readiness", "structural", "inventive_catalyst",
         }
         verify_reviewer_assignments(host, brainstorm_receipts, expected_brainstorm)
-        assert brief in successful_writes(brainstorm, host.workspace)
+        brief_writes = successful_writes(brainstorm, host.workspace).get(brief, [])
+        assert brief_writes
+        verify_completed_before(brainstorm, brainstorm_receipts, brief_writes[0])
         assert brief.is_file() and brief.stat().st_size > 0
-        rpc.prompt(f"""/skill:egm-draft
-Use {brief}, the existing source {source}, and the requirements above.
+        rpc.prompt(f"""/skill:egm-draft Use {brief}, the existing source {source}, and the requirements above.
 Author: EGM Pi workflow fixture. Write {draft}.
 For this noninteractive fixture, the user preapproves drafting each section
 from the recorded requirements and accepts the agent's section proposals.
 Include an implementation plan and tests. Stop after saving the complete draft.
 Do not start review, approve the final design, or implement production code.
-""")
+""", skill="egm-draft")
         assert draft.is_file() and draft.stat().st_size > 0
         assert draft in successful_writes(rpc.events, host.workspace)
         before_review = draft.read_bytes()
         start = len(rpc.events)
-        all_events = rpc.prompt(f"""/skill:egm-review
-TargetFile: {draft}
+        all_events = rpc.prompt(f"""/skill:egm-review TargetFile: {draft}
 Step: uninterrupted
 GoldfishContext: [{source}]
 Run all five stages in their prescribed order with all prescribed reviewers.
@@ -658,7 +688,7 @@ synthesizer. Stage 6 receives only its persona and target, no source or standard
 Collect each stage completely before launching the next. End turns when native
 child results are pending; do not poll. Finish the consolidated report and stop.
 Do not resolve findings, edit the draft, approve the design, or implement code.
-""")
+""", skill="egm-review", timeout=1200)
         review = all_events[start:]
         stages = [
             ("zoom_out_report.md", {"zoom_out", "inventive_catalyst"}),
@@ -681,14 +711,9 @@ Do not resolve findings, edit the draft, approve the design, or implement code.
             for receipt in receipts:
                 reads = reads_by_run[receipt["id"]]
                 assert draft in reads
-                assert any(
-                    event.get("type") == "message_end"
-                    and event.get("message", {}).get("customType") == "agent-completion"
-                    and event["message"]["details"]["id"] == receipt["id"]
-                    for event in review[:stage_write]
-                ), "Stage report written before its reviewer completed"
                 if filename == "comprehension_report.md":
                     assert reads == {draft, host.package / "agents/comprehension.md"}
+            verify_completed_before(review, receipts, stage_write)
             assert report.is_file() and report.stat().st_size > 0
             previous_write = stage_write
         consolidated = host.workspace / "consolidated_review_report.md"

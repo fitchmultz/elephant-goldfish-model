@@ -113,8 +113,9 @@ To exercise brainstorm, draft, and all five uninterrupted review stages, add
 `EGM_PI_WORKFLOW=1` to the live invocation. This also installs `pi-posthorse`
 inside the isolated agent directory. The fixture supplies requirements and
 answers its drafting checkpoints in advance. It verifies seven brainstorm
-lenses, fresh reviewer sessions, stage order, parent-written artifacts, and
-unchanged source code. This is model-backed fixture evidence, not an
+lenses, native `/skill:` expansion from the installed package, fresh reviewer
+sessions, reviewer completion before artifact writes, stage order, successful
+parent-written artifacts, and unchanged source code. This is model-backed fixture evidence, not an
 interactive approval or context-rollover test.
 
 Run the probes separately against the latest official Pi release and the
@@ -178,8 +179,8 @@ A harness counts as supported after `/egm-brainstorm`, `/egm-draft`, and
 
 | Harness | Version | Date | Install | Brainstorm | Draft | Review | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Pi (official) | 1.5.0, `f9a2636` | 2026-11-08 | Pass (packed candidate, local install) | Pass (fixture) | Pass (fixture) | Pass (fixture) | Candidate `498a0af`, `openai/gpt-6.1-sol`, `pi-subagents` 0.52.26, `pi-posthorse` 0.10.14. Seven skills discovered. Parent-turn isolation and successful persona/target/standard reads passed. Full workflow completed 17 distinct fresh reviewer assignments, ordered stages, and successful parent artifact writes without changing source or the reviewed draft. Native main exited 0; all child exits observed. Interactive approvals, instruction-file exclusion, context rollover, bootstrap, and drift reporting were not tested. |
-| Pi (fitchmultz fork) | 1.5.0, `eb5d22b` | 2026-11-08 | Pass (packed candidate, local install) | Pass (fixture) | Pass (fixture) | Pass (fixture) | Candidate `498a0af`, same model and companion versions as the official run. Seven skills, isolation, successful resource reads, and target-only comprehension passed. Full workflow completed 17 distinct fresh reviewer assignments with ordered stages and parent-written reports. Source and reviewed draft stayed unchanged. Native main and all 17 children exited 0. Same verification limits as the official run. |
+| Pi (official) | 1.5.0, `f9a2636` | 2026-11-08 | Pass (packed candidate and remote Git branch) | Pending | Pending | Pending | Seven skills, fresh reviewer isolation, and successful persona/target/standard reads passed. The earlier workflow fixture loaded skills manually, so it does not establish native `/skill:` execution. Corrected native-command reruns are pending. |
+| Pi (fitchmultz fork) | 1.5.0, `eb5d22b` | 2026-11-08 | Pass (packed candidate and remote Git branch) | Pending | Pending | Pending | Same package, isolation, and resource-read checks passed. Native-command workflow reruns are pending for the same reason as the official run. |
 | Antigravity CLI | 1.4.5 | 2026-10-22 | Pass; validator warnings | Pass (fixture) | Pass (fixture) | Pass (fixture) | Temporary HOME with no hooks, MCP servers, or other plugins. Parent-turn isolation probe passed on the native child transcript; instruction-file exclusion was not tested. Issue #237 reports project `AGENTS.md` and `GEMINI.md` injection on CLI 1.4.0. 16 native reviewers ran. Stages 5 to 9 ran in sequence by timestamp. All required reads occurred. Five stage reports exist. No code was written. The final design differs from the draft in one `Status` line. Not tested: interactive approvals, `egm-bootstrap`, and synthesizer nesting. The bootstrap skill is larger than the load limit. |
 | Claude Code | 2.1.308 | 2026-10-22 | Pass (`--plugin-dir`) | Pass (fixture) | Pass (fixture) | Pass after fix (fixture) | Isolation probe passed. Initial stage-order failure retained; focused nine-reviewer rerun verifies sequential stages and required reads. Process shutdown and parent no-shell fixture limits remain in the full report. |
 | Claude Cowork | Opus 5.5 Medium, connected cloud task | 2026-10-22 | Pass (ZIP) | Completed with direct-dispatch recovery | Completed | Partial: stages 5–7 | Usage limit interrupted stage 8. Final artifacts, stage 9 and actual isolation-child output remain unverified; #105. Earlier complete run is reported separately. |
