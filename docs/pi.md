@@ -107,8 +107,8 @@ Pi children cannot delegate. Use **direct dispatch** for every review:
 3. Tell each reviewer to read its persona first, then the target, standards,
    and supplied context. Reviewers return their complete findings through the
    native run result. They do not write files or edit the target or source.
-   Tell them not to use `notes`, `history`, `intercom`, or other memory tools
-   to recover the Elephant's discussions or conclusions.
+   Do not recover earlier conversations or the Elephant's private working
+   notes. The supplied document and reading list are the review's context.
 4. Inspect each completed result, paging until complete. The main session
    writes all report files. Apply `agents/synthesizer.md` there to deduplicate
    findings and write the aggregate. Its spawning step is already satisfied by
@@ -125,7 +125,7 @@ delegate({
 		"Review /absolute/project/design_draft.md, full file, against " +
 		"/absolute/package/resources/document_standards/zoom-out-standard.md. " +
 		"GoldfishContext: []. Do not write or modify any files. " +
-		"Do not use notes, history, intercom, or memory tools. " +
+		"Do not recover parent conversations or private working notes. " +
 		"Return all findings with severity, affected scope, and rationale."
 });
 ```
