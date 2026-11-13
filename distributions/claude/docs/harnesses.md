@@ -153,6 +153,10 @@ Interactive approvals and context rollover remain untested. See the
 [Pi guide](pi.md) and this fork's
 [test record](https://github.com/fitchmultz/elephant-goldfish-model/blob/main/TESTING.md#harness-test-record).
 
+The reduced native-client fixture also passes on official Pi 1.5.2. Its run on
+the selected fork build `3209c8e` stopped after a provider `400 Bad Request`;
+draft and review did not run. That failure remains in the test record.
+
 **Antigravity CLI**, **Claude Code**, and **Codex** pass automated installation
 and end-to-end workflow fixtures. Reviewer isolation evidence is narrower:
 parent-turn isolation and host-instruction exclusion are separate results.

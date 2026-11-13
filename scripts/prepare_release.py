@@ -28,7 +28,7 @@ def version_for_tag(root: Path, tag: str) -> str:
         raise ValueError("Tag must be vMAJOR.MINOR.PATCH without leading zeroes")
     version = tag[1:]
     for relative in ("plugin.json", ".claude-plugin/plugin.json",
-                     ".codex-plugin/plugin.json"):
+                     ".codex-plugin/plugin.json", "package.json"):
         manifest = json.loads((root / relative).read_text(encoding="utf-8"))
         if manifest.get("version") != version:
             raise ValueError(f"{relative}: version must match {tag}")
