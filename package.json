@@ -1,0 +1,33 @@
+{
+  "name": "@fitchmultz/pi-egm",
+  "version": "0.1.1",
+  "description": "Elephant-Goldfish Model for Pi: design with context and review with fresh agents.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fitchmultz/elephant-goldfish-model.git"
+  },
+  "homepage": "https://github.com/fitchmultz/elephant-goldfish-model#readme",
+  "bugs": {
+    "url": "https://github.com/fitchmultz/elephant-goldfish-model/issues"
+  },
+  "keywords": [
+    "pi-package",
+    "pi",
+    "skills",
+    "design",
+    "review"
+  ],
+  "files": [
+    "skills/",
+    "agents/",
+    "resources/",
+    "docs/",
+    "README.md",
+    "TESTING.md",
+    "LICENSE"
+  ],
+  "pi": {
+    "skills": ["./skills"]
+  }
+}

@@ -8,6 +8,7 @@ text.
 
 | Harness | Install |
 | --- | --- |
+| Pi | `pi install npm:@fitchmultz/pi-subagents` then `pi install git:github.com/fitchmultz/elephant-goldfish-model`; see [Pi integration](pi.md) |
 | ChatGPT desktop | Install the [published EGM plugin](https://chatgpt.com/plugins/plugins_6aeb90f47ec88191a3c107e01d3eb357) (desktop-only listing); see [packaging](codex.md#test-a-local-package) for personal testing |
 | Codex desktop | Install the [published EGM plugin](https://chatgpt.com/plugins/plugins_6aeb90f47ec88191a3c107e01d3eb357) (desktop-only listing) |
 | Antigravity CLI | `agy plugin install https://github.com/google/elephant-goldfish-model` |
@@ -66,6 +67,7 @@ while `agents/` contains reviewer personas. All hosts share the same `skills/`,
 
 | Harness | Manifest | Skills | Subagents |
 | --- | --- | --- | --- |
+| Pi | `package.json` `pi.skills` | `skills/`, explicit `/skill:egm-*` commands | `pi-subagents`; fresh general-purpose sessions read canonical personas |
 | Antigravity | `plugin.json` | `skills/` (default) | `agents/` (default) |
 | Claude Code | `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json` | `skills/` (default) | Claude adapters and orchestrators listed in `plugin.json` `agents` |
 | Claude Cowork | `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json` | `skills/` (default) | Subagents run inside Cowork; hooks n/a |
@@ -92,6 +94,7 @@ phrase to its own tool:
 
 | Harness | Subagent tool | Named personas | Nesting |
 | --- | --- | --- | --- |
+| Pi | `delegate` and `agent_runs` from `pi-subagents` | No; prompt includes the persona path | No; main session dispatches reviewers and scouts directly |
 | Antigravity | `invoke_subagent` | Yes | Yes |
 | Claude Code | Agent (Task) tool | Yes | Up to 3 levels by default |
 | Claude Cowork | Cowork subagents | Yes | Subagents run inside Cowork |
@@ -139,6 +142,20 @@ the project has no `CLAUDE.md`. To keep the files out of git, add the folder to
 `.gitignore`.
 
 ## Support Status & Contributing Other Harnesses
+
+**Pi** passes native packed-package discovery and fresh reviewer probes on
+official Pi 1.5.0 and `fitchmultz/pi` `eb5d22b`. Model-backed brainstorm, draft,
+and full-review fixtures pass through native `/skill:` expansion from the
+installed package. Reviews use
+`@fitchmultz/pi-subagents` with direct fresh-session dispatch.
+Read-only reviewer behavior is an instruction, not a tool-permission boundary.
+Interactive approvals and context rollover remain untested. See the
+[Pi guide](pi.md) and this fork's
+[test record](https://github.com/fitchmultz/elephant-goldfish-model/blob/main/TESTING.md#harness-test-record).
+
+The reduced native-client fixture also passes on official Pi 1.5.2. Its run on
+the selected fork build `3209c8e` stopped after a provider `400 Bad Request`;
+draft and review did not run. That failure remains in the test record.
 
 **Antigravity CLI**, **Claude Code**, and **Codex** pass automated installation
 and end-to-end workflow fixtures. Reviewer isolation evidence is narrower:

@@ -13,7 +13,9 @@
 
 <br>
 
-Develop ideas with context and review documents with fresh eyes. EGM is an open-source plugin for AI assistants.
+Develop ideas with context and review documents with fresh eyes. This is the
+Pi-native fork of [Google's Elephant-Goldfish Model](https://github.com/google/elephant-goldfish-model).
+Install it as a Pi package and run its seven workflows with `/skill:egm-*`.
 
 **Elephant** holds your project context and drafts the specification. **Goldfish** reviewers examine the draft and referenced source material without the earlier conversation, helping expose unstated assumptions and blind spots. **You** make the architectural trade-offs and approve the specification before implementing.
 
@@ -21,7 +23,25 @@ The built-in draft and design-review workflow targets software specifications. F
 
 ## Install
 
-Choose your coding agent. Install the complete plugin so its skills can read the reviewer prompts and document standards.
+### Pi
+
+```sh
+pi install npm:@fitchmultz/pi-subagents
+pi install git:github.com/fitchmultz/elephant-goldfish-model
+```
+
+Keep your existing `@fitchmultz/pi-subagents` installation if you already have one.
+Start a new session or run `/reload`. The package loads skills, not another
+agent runtime. Fresh reviewers use Pi's selected model and credentials through
+`delegate` with `context: "fresh"`.
+
+See the [Pi guide](docs/pi.md) for delegation, artifacts, and verification.
+Install the complete package so skills can read the reviewer prompts and
+document standards.
+
+### Other coding agents
+
+The shared upstream integrations remain available:
 
 ### ChatGPT and Codex desktop
 
@@ -55,12 +75,14 @@ Start a new session after installation. For **Claude Cowork** and **ChatGPT Work
 
 Open your project in your coding agent and choose a feature that needs design decisions. This example adds webhook delivery: what should happen when a delivery fails, or the same event arrives twice?
 
-The commands below are shown without a prefix. In Antigravity (agy CLI) and Claude Code, add the `/egm:` prefix, for example `/egm:egm-brainstorm`. On agy CLI 1.4.10 an unprefixed name is completed to the prefixed command ([#220](https://github.com/google/elephant-goldfish-model/issues/220)), but 1.4.8 does not ([#196](https://github.com/google/elephant-goldfish-model/issues/196)), so keep the prefix. In Codex, select the corresponding EGM skill from the skill picker. Brainstorming and review require a session that can create fresh subagents.
+The commands below use Pi's native `/skill:` form. Brainstorming and review
+require `pi-subagents` and a main session that stays open while children run.
+For other agents, use the command form in the [setup guide](docs/harnesses.md).
 
 <img src="skills/egm-brainstorm/assets/icon.svg" width="20" height="20" align="top" alt=""> **Explore the idea**
 
 ```text
-/egm-brainstorm Add webhook delivery to this project.
+/skill:egm-brainstorm Add webhook delivery to this project.
 ```
 
 Discuss requirements and trade-offs with the agent. Fresh reviewers challenge the proposal, and the agent saves the agreed direction in `concepts_brief.md`.
@@ -68,7 +90,7 @@ Discuss requirements and trade-offs with the agent. Fresh reviewers challenge th
 <img src="skills/egm-draft/assets/icon.svg" width="20" height="20" align="top" alt=""> **Draft the specification**
 
 ```text
-/egm-draft
+/skill:egm-draft
 ```
 
 The agent turns the brief into `design_draft.md`, pausing after each section for your feedback in chat.
@@ -76,7 +98,7 @@ The agent turns the brief into `design_draft.md`, pausing after each section for
 <img src="skills/egm-review/assets/icon.svg" width="20" height="20" align="top" alt=""> **Review the draft**
 
 ```text
-/egm-review design_draft.md
+/skill:egm-review design_draft.md
 ```
 
 Use the draft path returned by the agent.
@@ -117,10 +139,11 @@ You can use each skill when you need it. You do not have to follow the full sequ
 
 ## Learn more
 
+- [Pi guide](docs/pi.md): native commands, reviewer sessions, and resource paths.
 - [Getting started](docs/getting_started.md): the workflow and project layout.
 - [Setup](docs/harnesses.md): installation, agent capabilities, and known limits.
 - [Architecture](https://github.com/google/elephant-goldfish-model/blob/main/docs/designs/architecture.md): how skills and reviewers fit together.
-- [Testing](https://github.com/google/elephant-goldfish-model/blob/main/TESTING.md): checks, execution records, and verification limits.
+- [Testing](https://github.com/fitchmultz/elephant-goldfish-model/blob/main/TESTING.md): checks, execution records, and verification limits.
 - [Dave Rensin’s original essay](https://medium.com/@drensin/elephants-goldfish-and-the-new-golden-age-of-software-engineering-c33641a48874): the ideas behind EGM.
 
 ## Contribute
@@ -128,7 +151,11 @@ You can use each skill when you need it. You do not have to follow the full sequ
 See the [accessibility statement](https://github.com/google/elephant-goldfish-model/blob/main/ACCESSIBILITY.md)
 for accessibility goals, known limits, and how to report barriers.
 
-Read [contributing](https://github.com/google/elephant-goldfish-model/blob/main/CONTRIBUTING.md) for PRs, [issues](https://github.com/google/elephant-goldfish-model/issues) for bugs, and [discussions](https://github.com/google/elephant-goldfish-model/discussions) for questions.
+Use this fork's [issues](https://github.com/fitchmultz/elephant-goldfish-model/issues)
+for Pi integration bugs. Read
+[contributing](https://github.com/fitchmultz/elephant-goldfish-model/blob/main/CONTRIBUTING.md) for the shared
+workflow and [upstream discussions](https://github.com/google/elephant-goldfish-model/discussions)
+for the EGM method.
 
 ## License
 

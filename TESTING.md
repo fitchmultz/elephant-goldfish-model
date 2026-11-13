@@ -75,6 +75,44 @@ pytest tests/unit/test_link_integrity.py -v
 
 ---
 
+## Native Pi tests (opt-in)
+
+Use the package root of the Pi host under test. The test uses that host's
+exported `RpcClient` for process startup, commands, event delivery, and shutdown.
+No custom RPC transport or process supervisor is involved.
+
+```sh
+EGM_PI_PACKAGE_DIR=/absolute/path/to/pi-coding-agent \
+  node --test tests/integration/pi.test.mjs
+```
+
+The no-model test packs the candidate, installs it in a temporary Pi agent
+directory, and checks all seven commands and bundled resources. It runs outside
+the source checkout and does not change your Pi configuration.
+
+To run the single real-provider workflow fixture, add `EGM_PI_LIVE=1` and select
+a model available through your existing credentials:
+
+```sh
+EGM_PI_PACKAGE_DIR=/absolute/path/to/pi-coding-agent \
+  EGM_PI_LIVE=1 EGM_PI_MODEL=provider/model \
+  node --test tests/integration/pi.test.mjs
+```
+
+The fixture runs brainstorm, draft, and all five uninterrupted review stages.
+It verifies installed `/skill:` expansion, independent fresh reviewers, required
+resource reads, ordered stages, successful parent-written reports, and unchanged
+source and draft. It installs `@fitchmultz/pi-subagents` and `pi-posthorse` only
+inside the temporary agent directory. Drafting checkpoints are preanswered by
+the fixture; interactive approval dialogs and context rollover are not tested.
+
+Credentials come from `~/.pi/agent` by default. Set `EGM_PI_AUTH_AGENT_DIR` to use
+another source. Temporary credential copies are removed at teardown. The test
+prints the private evidence directory; keep its traces private.
+
+Run against official Pi and the fork separately. Record the exact host and
+companion versions with each result. See [Pi integration](docs/pi.md).
+
 ## Native Claude Reviewer Probe (Opt-in)
 
 With an authenticated Claude Code 2.1.271+ installation, run:
@@ -131,6 +169,10 @@ A harness counts as supported after `/egm-brainstorm`, `/egm-draft`, and
 
 | Harness | Version | Date | Install | Brainstorm | Draft | Review | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| Pi (official, reduced native-client test) | 1.5.2 | 2026-11-13 | Pass (packed candidate `54042ea`) | Pass | Pass | Pass | Native `RpcClient`; `openai/gpt-6.1-sol`, `@fitchmultz/pi-subagents` 0.52.39, `pi-posthorse` 0.10.28. Installed skill expansion, 17 independent fresh reviewers, ordered stages, successful parent reports, and unchanged source/draft passed. Actual child journals show the assigned standards were read. Temporary credential copies were removed. Interactive approvals, instruction-file exclusion, context rollover, bootstrap, and drift reporting remain untested. |
+| Pi (selected fork, reduced native-client test) | 1.5.2, `3209c8e` | 2026-11-13 | Pass (packed candidate `54042ea`) | Interrupted | Not run | Not run | Same model and companion versions as the official run. Seven brainstorm reviewers completed, then the main session received `OpenAI API error (400): Bad Request`. The test failed rather than treating it as completion. No dependency workaround or hidden retry was added. Temporary credential copies were removed. This is the selected local fork build, not a claim about current fork `main`. |
+| Pi (official) | 1.5.0, `f9a2636` | 2026-11-08 | Pass (packed candidate; Git branch `feat/pi-native`, commit `5baa607`) | Pass (native-command fixture) | Pass (native-command fixture) | Pass (native-command fixture) | Candidate `5baa607`, `openai/gpt-6.1-sol`, `@fitchmultz/pi-subagents` 0.52.26, `pi-posthorse` 0.10.14. All seven commands discovered. Native user messages verify installed `/skill:` expansion for brainstorm, draft, review, and the separate Stage 6 probe. Full workflow: 17 distinct fresh reviewers, ordered stages, eight successful parent artifacts, unchanged source and draft. Main and all children exited 0. Isolation and resource-read probes at `498a0af` also passed. Interactive approvals, instruction-file exclusion, context rollover, bootstrap, and drift reporting remain untested. |
+| Pi (fitchmultz fork) | 1.5.0, `eb5d22b` | 2026-11-08 | Pass (packed candidate; Git branch `feat/pi-native`, commit `5baa607`) | Pass (native-command fixture) | Pass (native-command fixture) | Pass (native-command fixture) | Candidate `5baa607`, `openai/gpt-6.1-sol`, `@fitchmultz/pi-subagents` 0.52.26, `pi-posthorse` 0.10.14. Native expansion verified for all three workflow commands and the target-only Stage 6 probe. Full workflow: 17 distinct fresh reviewers, ordered stages, eight successful parent artifacts, unchanged source and draft. Main and all children exited 0. Seven-command discovery passed; isolation and resource-read probes at `498a0af` passed. Same untested behaviors as the official run. |
 | Antigravity CLI | 1.4.5 | 2026-10-22 | Pass; validator warnings | Pass (fixture) | Pass (fixture) | Pass (fixture) | Temporary HOME with no hooks, MCP servers, or other plugins. Parent-turn isolation probe passed on the native child transcript; instruction-file exclusion was not tested. Issue #237 reports project `AGENTS.md` and `GEMINI.md` injection on CLI 1.4.0. 16 native reviewers ran. Stages 5 to 9 ran in sequence by timestamp. All required reads occurred. Five stage reports exist. No code was written. The final design differs from the draft in one `Status` line. Not tested: interactive approvals, `egm-bootstrap`, and synthesizer nesting. The bootstrap skill is larger than the load limit. |
 | Claude Code | 2.1.308 | 2026-10-22 | Pass (`--plugin-dir`) | Pass (fixture) | Pass (fixture) | Pass after fix (fixture) | Isolation probe passed. Initial stage-order failure retained; focused nine-reviewer rerun verifies sequential stages and required reads. Process shutdown and parent no-shell fixture limits remain in the full report. |
 | Claude Cowork | Opus 5.5 Medium, connected cloud task | 2026-10-22 | Pass (ZIP) | Completed with direct-dispatch recovery | Completed | Partial: stages 5–7 | Usage limit interrupted stage 8. Final artifacts, stage 9 and actual isolation-child output remain unverified; #105. Earlier complete run is reported separately. |
